@@ -1,5 +1,7 @@
 # Continuum Chrome Extension (v0.1.0)
 
+**Early development / experimental.** Review the preview before relying on an export. Long conversations can have earlier messages that have not loaded in the browser.
+
 Export AI conversations from your browser into clean, portable **Markdown** (ready to paste or upload into Gemini, Claude, or any other AI) and versioned **JSON** (`schema_version: "0.1.0"`)—100% locally, with no backend or API key.
 
 ## What’s Built So Far (Milestones 1 & 2)
@@ -47,3 +49,11 @@ Because `tests/test.html` uses ES modules, serve the folder locally or open it v
 - Optional Custom Instructions / Saved Memories capture
 - Additional provider adapters (Gemini, Claude)
 - Connecting the v0.1.0 JSON schema to `migrate.py`
+
+## Contributing
+
+Use synthetic conversations in tests and bug reports. Keep real captures outside the repository or in the ignored `exports/` folder. JSON exports include the conversation text and source URL.
+
+## License
+
+[MIT License](LICENSE)
