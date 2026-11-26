@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Continuum — Synthetic Fixture Tests</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        background: #111318;
+        color: #eceef4;
+        max-width: 820px;
+        margin: 24px auto;
+        padding: 0 16px;
+        line-height: 1.5;
+      }
+      h1 { font-size: 20px; margin-bottom: 6px; }
+      .summary { margin-bottom: 16px; font-weight: 600; }
+      .pass { color: #6ee7b7; }
+      .fail { color: #fca5a5; }
+      ul { list-style: none; padding: 0; }
+      li {
+        padding: 8px 12px;
+        margin-bottom: 6px;
+        border-radius: 6px;
+        background: #191c24;
+        border: 1px solid #2a2f3d;
+      }
+      pre {
+        margin-top: 6px;
+        color: #fca5a5;
+        font-size: 12px;
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Continuum — Synthetic Fixture Tests</h1>
+    <p id="summary" class="summary">Running tests…</p>
+    <ul id="results"></ul>
+
+    <script type="module">
+      import { buildExportPackage, validateExportPackage, SCHEMA_VERSION } from "../lib/schema.js";
+      import { exportPackageToMarkdown } from "../lib/markdown.js";
+      import "../adapters/chatgpt.js";
+      import "../adapters/scroll-capture.js";
+
+      const adapter = globalThis.ContinuumChatGPTAdapter;
+      const resultsEl = document.getElementById("results");
+      const summaryEl = document.getElementById("summary");
+
+      let passed = 0;
+      let failed = 0;
+
+      function assert(condition, message) {
+        if (!condition) throw new Error(message || "Assertion failed");
+      }
+
+      function test(name, fn) {
+        const li = document.createElement("li");
+        try {
+          fn();
+          passed++;
+          li.innerHTML = `<span class="pass">PASS</span> — ${name}`;
+        } catch (err) {
+          failed++;
+          li.innerHTML = `<span class="fail">FAIL</span> — ${name}`;
+          const pre = document.createElement("pre");
+          pre.textContent = err.stack || err.message;
+          li.appendChild(pre);
+        }
+        resultsEl.appendChild(li);
+      }
+
+      function parseFixtureDoc(html, title = "Sample Chat - ChatGPT") {
+        const doc = new DOMParser().parseFromString(
+          `<!DOCTYPE html><html><head><title>${title}</title></head><body>${html}</body></html>`,
+          "text/html"
+        );
+        return doc;
+      }
+
+      // 1. Page detection
+      test("Detects supported ChatGPT conversation URL", () => {
+        const res = adapter.detectPage(
+          "https://chatgpt.com/c/abc123-def456",
+          "Migration Plan - ChatGPT"
+        );
+        assert(res.supported === true, "Expected supported=true");
+        assert(res.pageType === "conversation", "Expected pageType=conversation");
+        assert(res.conversationId === "abc123-def456", "Wrong conversationId");
+        assert(res.title === "Migration Plan", `Unexpected title: ${res.title}`);
+      });
+
+      test("Detects ChatGPT project URL", () => {
+        const res = adapter.detectPage(
+          "https://chatgpt.com/g/g-p-998877-my-project/project",
+          "My Project - ChatGPT"
+        );
+        assert(res.supported === true, "Expected supported=true");
+        assert(res.pageType === "project", "Expected pageType=project");
+        assert(res.projectId === "g-p-998877-my-project", "Wrong projectId");
+      });
+
+      test("Rejects unsupported non-ChatGPT URL", () => {
+        const res = adapter.detectPage("https://example.com/blog", "Example");
+        assert(res.supported === false, "Expected supported=false");
+        assert(res.pageType === "unsupported", "Expected pageType=unsupported");
+      });
+
+      // 2. Clean extraction with code blocks, unicode, lists, tables, and KaTeX
+      test("Extracts conversation faithfully (code blocks, unicode, math, tables)", () => {
+        const doc = parseFixtureDoc(`
+          <main>
+            <div data-message-author-role="user">
+              <div class="whitespace-pre-wrap">Write a Python hello function 🚀</div>
+            </div>
+            <div data-message-author-role="assistant">
+              <div class="markdown">
+                <p>Here you go:</p>
+                <pre>
+                  <div><span>python</span><button data-testid="copy-code-button">Copy code</button></div>
+                  <code class="language-python">def hello(name):\n    return f"Hi {name}!"\n</code>
+                </pre>
+                <p>Formula: <span class="katex"><annotation encoding="application/x-tex">E = mc^2</annotation></span></p>
+                <table>
+                  <tr><th>Tool</th><th>Format</th></tr>
+                  <tr><td>Continuum</td><td>Markdown</td></tr>
+                </table>
+              </div>
+            </div>
+          </main>
+        `);
+
+        const { conversation, stats } = adapter.extractConversation(
+          doc,
+          "https://chatgpt.com/c/test-001"
+        );
+
+        assert(conversation.capture_status === "complete", `Expected complete, got ${conversation.capture_status}`);
+        assert(stats.messageCount === 2, "Expected 2 messages");
+        assert(conversation.messages[0].role === "user", "First role should be user");
+        assert(conversation.messages[0].content.includes("🚀"), "Unicode emoji lost");
+        assert(conversation.messages[1].content.includes("```python"), "Code fence language missing");
+        assert(!conversation.messages[1].content.includes("Copy code"), "Copy button text leaked into code block");
+        assert(conversation.messages[1].content.includes("$E = mc^2$"), "KaTeX math not preserved");
+        assert(conversation.messages[1].content.includes("| Continuum | Markdown |"), "Table not preserved");
+      });
+
+      test("Captures user bubbles without author attributes as a partial transcript", () => {
+        const doc = parseFixtureDoc(`
+          <main>
+            <div class="group/user-message">
+              <div class="group/user-message">
+                <div class="bg-user-message text-user-message">
+                  <div class="text-size-chat whitespace-pre-wrap">First prompt</div>
+                </div>
+              </div>
+            </div>
+            <div class="markdown"><p>Assistant response</p></div>
+            <div class="bg-user-message text-user-message">
+              <div class="text-size-chat whitespace-pre-wrap">Second prompt</div>
+            </div>
+          </main>
+        `);
+        const { conversation, stats } = adapter.extractConversation(
+          doc,
+          "https://chatgpt.com/c/test-user-bubbles"
+        );
+        assert(conversation.capture_status === "partial", "Expected a partial transcript");
+        assert(conversation.completeness_basis.includes("No assistant responses"), "Expected an explanation of the missing responses");
+        assert(stats.userCount === 2 && stats.assistantCount === 0, "Expected two user messages");
+        assert(conversation.messages.map(message => message.content).join(", ") === "First prompt, Second prompt", "Expected each prompt once, in order");
+      });
+
+      test("Captures assistant Markdown roots in order with user bubbles", () => {
+        const doc = parseFixtureDoc(`
+          <main>
+            <div class="bg-user-message text-user-message">
+              <div class="whitespace-pre-wrap">First prompt</div>
+            </div>
+            <div class="MarkdownRoot-rZKhxa">
+              <p>First <strong>reply</strong></p><div class="MarkdownRoot-nested"><p>More detail</p></div>
+            </div>
+            <div class="bg-user-message text-user-message">
+              <div class="whitespace-pre-wrap">Second prompt</div>
+            </div>
+            <div class="other-class MarkdownRoot-newHash"><p>Second reply</p></div>
+          </main>
+        `);
+        const { conversation, stats } = adapter.extractConversation(
+          doc,
+          "https://chatgpt.com/c/test-layout"
+        );
+        assert(conversation.capture_status === "partial", "Expected conservative completeness for layout-based capture");
+        assert(stats.userCount === 2 && stats.assistantCount === 2, "Expected two messages per role");
+        assert(conversation.messages.map(message => message.role).join(",") === "user,assistant,user,assistant", "Expected page order");
+        assert(conversation.messages[1].content === "First **reply**\n\nMore detail", "Expected formatted reply without duplicate turns");
+        assert(conversation.messages[3].content === "Second reply", "Expected to capture a changed class suffix");
+      });
+
+      // 3. Partial capture when images/media are omitted
+      test("Marks capture as partial and records omissions for images", () => {
+        const doc = parseFixtureDoc(`
+          <main>
+            <div data-message-author-role="user">
+              <div class="whitespace-pre-wrap">Check this diagram: <img alt="Architecture diagram" src="x.png" /></div>
+            </div>
+          </main>
+        `);
+        const { conversation } = adapter.extractConversation(
+          doc,
+          "https://chatgpt.com/c/test-img"
+        );
+        assert(conversation.capture_status === "partial", "Expected partial status");
+        assert(conversation.omissions.length === 1, "Expected 1 omission");
+        assert(
+          conversation.messages[0].content.includes("[Omitted: image: Architecture diagram]"),
+          "Expected inline omission marker"
+        );
+      });
+
+      test("Distinguishes empty matched elements from exported messages and groups repeated image notes", () => {
+        const doc = parseFixtureDoc(`
+          <main>
+            <div class="MarkdownRoot-empty"></div>
+            <div class="MarkdownRoot-reply"><p>Reply</p><img src="a.png"><img src="b.png"></div>
+          </main>
+        `);
+        const { conversation } = adapter.extractConversation(doc, "https://chatgpt.com/c/test-notes");
+        assert(conversation.messages.length === 1, "Expected one exported message");
+        assert(conversation.completeness_basis.includes("One matched page element"), "Expected an empty element count");
+        assert(conversation.omissions[0].startsWith("Page element 1 (matched as assistant)"), "Expected a page element reference");
+        assert(conversation.omissions[1] === "Exported message 1: Non-text content omitted (image). (×2)", "Expected a grouped image note");
+        assert(conversation.omissions.length === 2, "Expected one note for each issue");
+      });
+
+      // 4. Partial capture when assistant is still generating
+      test("Marks capture as partial while assistant is streaming", () => {
+        const doc = parseFixtureDoc(`
+          <main>
+            <div data-message-author-role="user"><div class="whitespace-pre-wrap">Hi</div></div>
+            <button aria-label="Stop generating">Stop</button>
+          </main>
+        `);
+        const { conversation } = adapter.extractConversation(
+          doc,
+          "https://chatgpt.com/c/test-stream"
+        );
+        assert(conversation.capture_status === "partial", "Expected partial while streaming");
+        assert(conversation.completeness_basis.includes("generating"), "Expected streaming explanation");
+      });
+
+      // 5. Unread when no messages exist
+      test("Marks empty conversation DOM as unread", () => {
+        const doc = parseFixtureDoc(`<main><p>Loading...</p></main>`);
+        const { conversation } = adapter.extractConversation(
+          doc,
+          "https://chatgpt.com/c/test-empty"
+        );
+        assert(conversation.capture_status === "unread", "Expected unread status");
+      });
+
+      // 6. Schema builder, validator, and Markdown renderer
+      test("Builds valid v0.1.0 schema and renders Markdown cleanly", () => {
+        const pkg = buildExportPackage({
+          provider: "chatgpt",
+          conversations: [
+            {
+              id: "c1",
+              title: "Test Export",
+              source_url: "https://chatgpt.com/c/c1",
+              capture_status: "complete",
+              completeness_basis: "All 2 messages captured.",
+              messages: [
+                { sequence: 1, role: "user", content: "Hello" },
+                { sequence: 2, role: "assistant", content: "World" },
+              ],
+              omissions: [],
+              errors: [],
+            },
+          ],
+        });
+
+        const validation = validateExportPackage(pkg);
+        assert(validation.valid === true, `Schema errors: ${validation.errors.join(", ")}`);
+        assert(pkg.schema_version === SCHEMA_VERSION, "Schema version mismatch");
+
+        const md = exportPackageToMarkdown(pkg);
+        assert(md.includes("# Test Export"), "Title missing in Markdown");
+        assert(md.includes("### User\n\nHello"), "User message missing");
+        assert(md.includes("### Assistant\n\nWorld"), "Assistant message missing");
+      });
+
+      // Exercise a virtualized window that replaces its DOM as the user scrolls up.
+      const fixture = document.createElement("div");
+      document.body.append(fixture);
+      const setWindow = texts => {
+        fixture.replaceChildren(...texts.map(text => {
+          const node = document.createElement("div");
+          node.className = "MarkdownRoot-test";
+          node.textContent = text;
+          return node;
+        }));
+      };
+      const capture = globalThis.continuumScrollCapture;
+      const extract = adapter.extractConversation;
+      adapter.extractConversation = (doc, url, visitor) =>
+        extract(doc, "https://chatgpt.com/c/scroll-test", visitor);
+      try {
+        setWindow(["Third", "Fourth"]);
+        capture("start");
+        setWindow(["Second", "Third"]);
+        await new Promise(resolve => setTimeout(resolve, 160));
+        setWindow(["First", "Second"]);
+        test("Scroll recording merges remounted turns and samples the final window on stop", () => {
+          const { conversation } = capture("stop");
+          assert(conversation.messages.map(m => m.content).join() === "First,Second,Third,Fourth", "Unexpected merged transcript");
+          assert(conversation.capture_status === "partial", "Manual coverage must remain partial");
+          assert(capture("status").stopped, "Expected the recorder to be stopped");
+        });
+      } finally {
+        adapter.extractConversation = extract;
+        fixture.remove();
+      }
+
+      summaryEl.textContent = `${passed} passed, ${failed} failed`;
+      summaryEl.className = `summary ${failed === 0 ? "pass" : "fail"}`;
+    </script>
+  </body>
+</html>

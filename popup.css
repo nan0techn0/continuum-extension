@@ -1,0 +1,258 @@
+:root {
+  color-scheme: dark;
+  --bg: #111318;
+  --surface: #191c24;
+  --border: #2a2f3d;
+  --text: #eceef4;
+  --muted: #9aa3b5;
+  --accent: #6366f1;
+  --accent-hover: #4f46e5;
+  --ok-bg: #143326;
+  --ok-text: #6ee7b7;
+  --warn-bg: #362811;
+  --warn-text: #fcd34d;
+  --err-bg: #3b171c;
+  --err-text: #fca5a5;
+  --neutral-bg: #252a36;
+  --neutral-text: #cbd5e1;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  width: 380px;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif;
+  font-size: 13px;
+  line-height: 1.45;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.brand-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.header h1 {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.version {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.container {
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.row-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.page-title {
+  font-weight: 600;
+  color: var(--text);
+  word-break: break-word;
+}
+
+.stats {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  text-transform: capitalize;
+}
+
+.badge-ok {
+  background: var(--ok-bg);
+  color: var(--ok-text);
+}
+
+.badge-warn {
+  background: var(--warn-bg);
+  color: var(--warn-text);
+}
+
+.badge-error {
+  background: var(--err-bg);
+  color: var(--err-text);
+}
+
+.badge-neutral {
+  background: var(--neutral-bg);
+  color: var(--neutral-text);
+}
+
+.callout {
+  margin-top: 4px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.callout ul {
+  margin-top: 4px;
+  padding-left: 16px;
+}
+
+.callout-warn {
+  background: var(--warn-bg);
+  color: var(--warn-text);
+}
+
+.callout-error {
+  background: var(--err-bg);
+  color: var(--err-text);
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 2px 2px;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.preview-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.preview-box {
+  background: #0b0d11;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  max-height: 150px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  color: #d6dce8;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.actions-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.btn {
+  border: none;
+  border-radius: 7px;
+  padding: 9px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #ffffff;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.btn-secondary {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #232834;
+}
+
+.feedback {
+  min-height: 16px;
+  font-size: 12px;
+  color: var(--ok-text);
+  text-align: center;
+}
+
+.hidden {
+  display: none;
+}

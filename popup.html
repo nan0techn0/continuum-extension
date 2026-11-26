@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Continuum</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header class="header">
+      <div class="brand">
+        <span class="brand-dot" aria-hidden="true"></span>
+        <h1>Continuum</h1>
+      </div>
+      <span class="version">v0.1.0 · Local</span>
+    </header>
+
+    <main class="container">
+      <!-- Page detection status -->
+      <section class="card" aria-label="Detected page">
+        <div class="row-between">
+          <span class="label">Active Page</span>
+          <span id="page-badge" class="badge badge-neutral">Checking…</span>
+        </div>
+        <p id="page-title" class="page-title"></p>
+        <p id="page-reason" class="muted"></p>
+      </section>
+
+      <!-- Primary extract action -->
+      <button id="extract-btn" class="btn btn-primary" disabled>
+        Extract Conversation
+      </button>
+      <button id="scroll-btn" class="btn btn-secondary" disabled>Start scroll capture</button>
+      <p id="scroll-status" class="muted" role="status"></p>
+
+      <!-- Extraction result & export controls (hidden until extraction runs) -->
+      <section id="result-section" class="hidden" aria-label="Extraction result">
+        <div class="card">
+          <div class="row-between">
+            <span class="label">Capture Status</span>
+            <span id="capture-badge" class="badge badge-neutral"></span>
+          </div>
+          <p id="stats-line" class="stats"></p>
+          <p id="completeness-note" class="muted"></p>
+
+          <div id="errors-box" class="callout callout-error hidden">
+            <strong>Errors</strong>
+            <ul id="errors-list"></ul>
+          </div>
+        </div>
+
+        <div class="options">
+          <label class="checkbox-row">
+            <input type="checkbox" id="opt-handoff" checked />
+            <span>Include AI handoff note at top of Markdown</span>
+          </label>
+          <label class="checkbox-row">
+            <input type="checkbox" id="opt-metadata" checked />
+            <span>Include export metadata &amp; recording summary</span>
+          </label>
+        </div>
+
+        <div class="preview-block">
+          <div class="row-between">
+            <span class="label">Markdown Preview</span>
+            <span id="preview-chars" class="muted"></span>
+          </div>
+          <pre id="preview-text" class="preview-box"></pre>
+        </div>
+
+        <div class="actions">
+          <button id="copy-md-btn" class="btn btn-primary">
+            Copy Markdown
+          </button>
+          <div class="actions-row">
+            <button id="download-md-btn" class="btn btn-secondary">
+              Download .md
+            </button>
+            <button id="download-json-btn" class="btn btn-secondary">
+              Download .json
+            </button>
+          </div>
+        </div>
+
+        <p id="feedback-msg" class="feedback" role="status" aria-live="polite"></p>
+      </section>
+    </main>
+
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

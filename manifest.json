@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Continuum",
+  "version": "0.1.0",
+  "description": "Export AI conversations into portable, provider-independent Markdown and versioned JSON—locally in your browser.",
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Continuum — Export AI Context"
+  }
+}
