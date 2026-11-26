@@ -1,0 +1,30 @@
+# Private chat captures and migration output
+/exports/
+/output/
+/private/
+conversations.json
+chat.html
+*.har
+
+# Continuum download names, including browser-generated duplicate copies
+*-[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9].md
+*-[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9].json
+*-[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9] (*).md
+*-[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9] (*).json
+
+# Local credentials and extension signing keys
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Local tooling and packaged extensions
+node_modules/
+.venv/
+__pycache__/
+*.crx
+.DS_Store
+Thumbs.db
