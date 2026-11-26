@@ -5,8 +5,7 @@ Export AI conversations from your browser into clean, portable **Markdown** (rea
 ## What’s Built So Far (Milestones 1 & 2)
 
 - **Page detection:** Recognizes ChatGPT conversations, projects, home pages, and unsupported sites.
-- **Single-conversation extraction:** Captures user & assistant turns in chronological order, preserving code blocks (with language tags, stripping "Copy code" UI text), lists, tables, links, Unicode, and KaTeX math.
-- **Honest completeness reporting:** Flags `complete`, `partial`, `unread`, or `failed` with explicit `completeness_basis` and `omissions` (e.g., images, scrolled/possibly virtualized chats, or mid-generation responses).
+- **Single-conversation extraction:** Captures user & assistant turns (note this gets the transcript but it can't store images used, created, interactive UI, it's used for chat transcripts. Besides... text is the dominant source of context and will be sufficient to have an extremely informed understanding of the chat). 
 - **Direct export:** Copy Markdown to clipboard, download `.md`, or download versioned `.json`.
 
 ## Project Layout
